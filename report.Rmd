@@ -12,6 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 # Part 1: Logistic regression
 
 ## a)
+In this part we model the probability of a successful ascent of a mountain using binary regression with a logit link.
+Let $y_i$ be the number of successful ascents, and let $n_i$ be the total number of attempts (sum of successful and failed) of the $i$th mountain.
+The GLM model is then,
 
 
 ## b)
