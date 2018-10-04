@@ -11,11 +11,40 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Part 1: Logistic regression
 
-## a)
 In this part we model the probability of a successful ascent of a mountain using binary regression with a logit link.
 Let $y_i$ be the number of successful ascents, and let $n_i$ be the total number of attempts (sum of successful and failed) of the $i$th mountain.
 The GLM model is then,
 
+1. Model for response: $Y_i \sim \text{Bin}(n_i, \pi_i) \quad \text{for} \  i = 1,\ldots,113$
+2. Linear predictor: $\eta_i=x^T_i\beta$
+3. Link function: $\eta_i = \ln \left(\frac{\pi_i}{1-\pi_i}\right)$
+
+where $\mathbf{x}_i$ is $p$ dimensional column vector of covariates for observation $i$, and $\boldsymbol\beta$ is the vector of regression parameters.
+
+## a)
+
+Since we assume independent pairs of $(y_i,\mathbf{x}_i)$, the likelihood as a function can then be written as
+
+\begin{align}
+L(\beta) = \prod_{i=1}^n\pi_i^{y_i}(1-\pi_i)^{1-y_i}
+\end{align}
+
+the log-likelihood as a function of $\beta$ is then found by taking the logarithm and using the link function to replace $pi_i$.
+
+\begin{align}
+\ell(\beta) &= \sum_{i=1}^n y_i \ln \pi_i + (1-y_i) \ln (1-\pi_i) \\
+&= \sum_{i=1}^n y_i \ln \left(\frac{\pi_i}{1-\pi_i}\right) + \ln(1-\pi_i) \\
+&= \sum_{i=1}^n y_i \mathbf{x}_i \beta - \ln(1+e^{\mathbf{x}_i \beta})
+\end{align}
+
+The maximum likelihood estimate of $\beta$ is then found by maximizing $\ell(\beta)$.
+For some models this can be expressed on closed form by solving 
+
+\begin{align}
+s(\hat \beta) = \frac{\partial \ell(\hat \beta)}{\partial \beta} = 0
+\end{align}
+
+In this case the equations above are non-linear, and the maximum is found using numerical methods like Newton-Raphson or Fisher scoring.
 
 ## b)
 
