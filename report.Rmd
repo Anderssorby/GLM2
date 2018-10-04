@@ -26,3 +26,23 @@ mount <- read.table(file = filepath, header = TRUE,
 model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family = "binomial")
 summary(model1)
 ```
+
+
+
+
+# Part 2: Poisson regression
+
+
+```{r tippeligaen}
+filepath <- "https://www.math.ntnu.no/emner/TMA4315/2018h/eliteserien2018"
+tippeliga <- read.table(file = filepath, header = TRUE,
+                        colClasses = c("character", "character", "numeric", "numeric"))
+```
+
+```{r myglm}
+source('myglm.R')
+```
+
+## a)
+
+Indepence between the goals of the home and the away team is questionable. 
