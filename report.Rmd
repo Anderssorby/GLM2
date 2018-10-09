@@ -78,3 +78,10 @@ source('myglm.R')
 ## a)
 
 Indepence between the goals of the home and the away team is questionable. 
+
+
+
+# Source code
+```{r source, code=readLines('myglm.R')}
+
+```
