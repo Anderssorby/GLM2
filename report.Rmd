@@ -64,10 +64,10 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
-<<<<<<< Updated upstream
-The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. These are a very high odds, which makes sense as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases when $x_1$ increases by 1. More specifically, if the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain are multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds are multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decrease when the prominence increases. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower are multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
 
-WALD TEST HERE
+When hypothesis testing whether a single model parameter $\beta_i = 0$ or not, the Wald test and the Z test are equivalent since the Wald statistic then becomes the Z statistic squared, which obviously is $\chi^2$.
+According to the Wald, the `prominence` parameter is less significant than the others, but they are still all highly significant.
 
 Calculating a 95 % CI:
 ```{r}
@@ -80,10 +80,9 @@ cbind(lower, upper)
 
 
 As can be seen, a 95 % CI for the height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
-=======
-As can be seen, a 95 % CI for height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
 
-A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. This means that the when $x_1$ increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with factor lying in the interval $[0.9981,0.9986]$.   
+A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. 
+This means that the when $x_1$ increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with factor lying in the interval $[0.9981,0.9986]$.   
 
 ## c)
 
@@ -112,15 +111,59 @@ The deviance residuals are then
 d_i = \text{sign}(y_i-\hat{y}_i)\sqrt{D_i} =\text{sign}(y_i-\hat{y}_i)\sqrt{2\ln \frac{y_i}{\hat{y}_i}}
 \end{align}
 
-
-```{r residuals}
+```{r residuals, fig.cap="\\label{fig:dresheight} Deviance residuals as a function of height."}
 dres <- residuals(model1, type = "deviance")
-plotdf <- data.frame(dres = dres, fitted = model1$fitted.values)
-ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
+plotdf <- data.frame(dres = dres, fitted = model1$fitted.values, height=mount$height, prom = mount$prominence)
+ggplot(plotdf, aes(x=height, y=dres)) +geom_point() + labs(x ="Height", y="Deviance residuals" )
 ```
 
-# Part 2: Poisson regression
+```{r resprominence, fig.cap="\\label{fig:dresprom} Deviance residuals as a function of prominence."}
+ggplot(plotdf, aes(x=prom, y=dres)) +geom_point() + labs(x ="Prominence", y="Deviance residuals" )
+```
 
+In figures \ref{fig:dresheight} and \ref{fig:dresprom} the deviance residuals are plotted vs `height` and `prominence`, respectively.
+There is no obvious trend in either of the plots.
+The deviance residuals seem to have mean and variance independent of both covariates.
+
+ASSESSMENT OF MODEL FIT USING MODEL DEVIANCE.
+
+```{r probplot,fig.cap="\\label{fig:probabilities} The probability of a successful ascent as a function of both height and prominence."}
+steps <- 100
+
+hmin <- min(plotdf$height)
+hmax <- max(plotdf$height)
+heights <- seq(hmin,hmax, length.out=steps)
+
+pmin <- min(plotdf$prom)
+pmax <- max(plotdf$prom)
+proms <- seq(pmin,pmax,length.out=steps)
+
+prob <- function(height, prom, model){
+  eta <- c(1,height,prom)%*%model$coefficients
+  res <- exp(eta)/(1+exp(eta))
+  return(res)
+}
+
+probs <- c()
+pcoord <- c()
+hcoord <- c()
+for (i in 1:steps){
+  for (j in 1:steps){
+    probs <- append(probs, prob(heights[i],proms[j],model1))
+    hcoord <- append(hcoord,heights[i])
+    pcoord <- append(pcoord,proms[j])
+  }
+}
+
+probsdf <- data.frame(prob=probs, he=hcoord, pr=pcoord)
+ggplot(data = probsdf, aes(x=he, y=pr)) + geom_raster(aes(fill=prob)) + scale_fill_gradientn(colours = terrain.colors(10)) +labs(x="Height",y="Prominence",colour="Probability") 
+```
+
+Figure \ref{fig:probabilities} shows how the probability of a successful ascent depends on both covariates.
+According to the model the probability decreases monotonously with both `height` and `prominence`, and it is possible to compensate an increase in one covariate by decreasing the other.
+As expected the model predicts probabilities close to zero as both covariates increase and close to one as both decrease.
+
+# Part 2: Poisson regression
 
 ```{r tippeligaen}
 filepath <- "https://www.math.ntnu.no/emner/TMA4315/2018h/eliteserien2018"
