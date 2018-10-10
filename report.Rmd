@@ -64,7 +64,8 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
-The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More spesifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More spesifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+<<<<<<< Updated upstream
+The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
 
 WALD TEST HERE
 
@@ -77,35 +78,39 @@ upper = model1$coefficients[2] + qnorm(1 - alpha/2) * sds
 cbind(lower, upper)
 ```
 
+
 As can be seen, a 95 % CI for the height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
+=======
+As can be seen, a 95 % CI for height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
+
 A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. This means that the when $x_1$ increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with factor lying in the interval $[0.9981,0.9986]$.   
 
 ## c)
 
 The saturated model with one estimated parameter per data point is given by
 
-\begin{align*}
+\begin{align}
 \tilde{\lambda}_i = y_i.
-\end{align*}
+\end{align}
 
 Combining this with the log-likelihood from equation \eqref{eq:loglik} we can express the deviance as
 
-\begin{align*}
+\begin{align}
 D &= -2(\ell(\hat \lambda)-\ell(\tilde{\lambda})) \\
 &= 2 \sum_{i=1}^n \left(y_i(\ln y_i - \ln \hat{y}_i)-(y_i-\hat{y}_i)\right).
-\end{align*}
+\end{align}
 
 Since our candidate model includes an intercept the last term will cancel out (this follows directly from $s(\hat \beta ) = 0$). We can then write
 
-\begin{align*}
+\begin{align}
 D=2\sum_{i=1}^n y_i \ln \frac{y_i}{\hat{y}_i} = \sum_{i=1}^n D_i,
-\end{align*}
+\end{align}
 
 The deviance residuals are then 
 
-\begin{align*}
+\begin{align}
 d_i = \text{sign}(y_i-\hat{y}_i)\sqrt{D_i} =\text{sign}(y_i-\hat{y}_i)\sqrt{2\ln \frac{y_i}{\hat{y}_i}}
-\end{align*}
+\end{align}
 
 
 ```{r residuals}
@@ -136,7 +141,7 @@ source('myglm.R')
 
 The Pearson $\chi^2$-test is used to test goodness of fit, homogeneity and independece of some data. In this case a test for independence via a contingency table is necessary. 
 
-Indepence between the goals of the home and the away team is questionable. It seems natural that if the away team has more goals the home team would have less. 
+Independence between the goals of the home and the away team is questionable. It seems natural that if the away team has more goals the home team would have less. 
 
 ```{r chisq}
 
