@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
 ```
 
 # Part 1: Logistic regression
@@ -32,6 +33,7 @@ L(\beta) = \prod_{i=1}^n\pi_i^{y_i}(1-\pi_i)^{1-y_i}
 the log-likelihood as a function of $\beta$ is then found by taking the logarithm and using the link function to replace $pi_i$.
 
 \begin{align}
+\label{eq:loglik}
 \ell(\beta) &= \sum_{i=1}^n y_i \ln \pi_i + (1-y_i) \ln (1-\pi_i) \\
 &= \sum_{i=1}^n y_i \ln \left(\frac{\pi_i}{1-\pi_i}\right) + \ln(1-\pi_i) \\
 &= \sum_{i=1}^n y_i \mathbf{x}_i \beta - \ln(1+e^{\mathbf{x}_i \beta})
@@ -59,6 +61,41 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
+
+
+## c)
+
+The saturated model with one estimated parameter per data point is given by
+
+\begin{align*}
+\tilde{\lambda}_i = y_i.
+\end{align*}
+
+Combining this with the log-likelihood from equation \eqref{eq:loglik} we can express the deviance as
+
+\begin{align*}
+D &= -2(\ell(\hat \lambda)-\ell(\tilde{\lambda})) \\
+&= 2 \sum_{i=1}^n \left(y_i(\ln y_i - \ln \hat{y}_i)-(y_i-\hat{y}_i)\right).
+\end{align*}
+
+Since our candidate model includes an intercept the last term will cancel out (this follows directly from $s(\hat \beta ) = 0$). We can then write
+
+\begin{align*}
+D=2\sum_{i=1}^n y_i \ln \frac{y_i}{\hat{y}_i} = \sum_{i=1}^n D_i,
+\end{align*}
+
+The deviance residuals are then 
+
+\begin{align*}
+d_i = \text{sign}(y_i-\hat{y}_i)\sqrt{D_i} =\text{sign}(y_i-\hat{y}_i)\sqrt{2\ln \frac{y_i}{\hat{y}_i}}
+\end{align*}
+
+
+```{r residuals}
+dres <- residuals(model1, type = "deviance")
+plotdf <- data.frame(dres = dres, fitted = model1$fitted.values)
+ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
+```
 
 
 
