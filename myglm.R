@@ -1,18 +1,27 @@
 
 # Select Build, Build and reload to build and lode into the R-session.
 
-myglm <- function(formula, data = list(), contrasts = NULL, ...){
+myglm <- function(formula, data = list(), contrasts = NULL, family = "poisson",
+                  response = log,...){
   # Extract model matrix & responses
   mf <- model.frame(formula = formula, data = data)
   X  <- model.matrix(attr(mf, "terms"), data = mf, contrasts.arg = contrasts)
   y  <- model.response(mf)
   terms <- attr(mf, "terms")
   
-  
+  n <- nrow(X)
   # Add code here to calculate coefficients, residuals, fitted values, etc...
   # and store the results in the list est
   est <- list(terms = terms, model = mf)
   
+  if (family == "poisson") {
+    scoreFunction <- function(beta) {
+      for (i in range(1, n)) {
+        eta_i <- t(beta) %*% X[i]
+        
+      }
+    }
+  }
   # Store call and formula used
   est$call <- match.call()
   est$formula <- formula
