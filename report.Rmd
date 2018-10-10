@@ -7,6 +7,8 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+#install.packages("ggplot2")
+#install.packages("GGally")
 library(ggplot2)
 ```
 
@@ -30,7 +32,7 @@ Since we assume independent pairs of $(y_i,\mathbf{x}_i)$, the likelihood as a f
 L(\beta) = \prod_{i=1}^n\pi_i^{y_i}(1-\pi_i)^{1-y_i}
 \end{align}
 
-the log-likelihood as a function of $\beta$ is then found by taking the logarithm and using the link function to replace $pi_i$.
+the log-likelihood as a function of $\beta$ is then found by taking the logarithm and using the link function to replace $\pi_i$.
 
 \begin{align}
 \label{eq:loglik}
@@ -38,6 +40,7 @@ the log-likelihood as a function of $\beta$ is then found by taking the logarith
 &= \sum_{i=1}^n y_i \ln \left(\frac{\pi_i}{1-\pi_i}\right) + \ln(1-\pi_i) \\
 &= \sum_{i=1}^n y_i \mathbf{x}_i \beta - \ln(1+e^{\mathbf{x}_i \beta})
 \end{align}
+
 
 The maximum likelihood estimate of $\beta$ is then found by maximizing $\ell(\beta)$.
 For some models this can be expressed on closed form by solving 
@@ -61,11 +64,22 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
-The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5 $. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More spesifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More spesifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More spesifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More spesifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
 
 WALD TEST HERE
 
-<<<<<<< Updated upstream
+Calculating a 95 % CI:
+```{r}
+sds = sqrt(summary(model1)$cov.scaled[2,2])
+alpha = 0.05
+lower = model1$coefficients[2] - qnorm(1 - alpha/2) * sds
+upper = model1$coefficients[2] + qnorm(1 - alpha/2) * sds
+cbind(lower, upper)
+```
+
+As can be seen, a 95 % CI for the height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
+A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. This means that the when $x_1$ increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with factor lying in the interval $[0.9981,0.9986]$.   
+
 ## c)
 
 The saturated model with one estimated parameter per data point is given by
@@ -99,21 +113,6 @@ dres <- residuals(model1, type = "deviance")
 plotdf <- data.frame(dres = dres, fitted = model1$fitted.values)
 ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
 ```
-
-
-=======
-Calculating a 95 % CI:
-```{r}
-sds = sqrt(summary(modelfit)$cov.scaled[2,2])
-alpha = 0.05
-lower = modelfit$coefficients[2] - qnorm(1 - alpha/2) * sds
-upper = modelfit$coefficients[2] + qnorm(1 - alpha/2) * sds
-cbind(lower, upper)
-```
-
-As can be seen, a 95 % CI for height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
-A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. This means that the when $x_1$ increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with factor lying in the interval $[0.9981,0.9986]$.   
->>>>>>> Stashed changes
 
 # Part 2: Poisson regression
 
