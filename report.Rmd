@@ -1,8 +1,11 @@
 ---
 title: "Logistic regression and Poisson regression"
-author: "Anders Christiansen Sørby, Edvard Hove"
+author: "Anders Christiansen Sørby, Edvard Hove, Angela Maiken Johnsen"
 date: "October 4, 2018"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -64,12 +67,17 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
-The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. These are a very high odds, which makes sense as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases when $x_1$ increases by 1. More specifically, if the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain are multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds are multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decrease when the prominence increases. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower are multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
 
 When hypothesis testing whether a single model parameter $\beta_i = 0$ or not, the Wald test and the Z test are equivalent since the Wald statistic then becomes the Z statistic squared, which obviously is $\chi^2$.
-According to the Wald, the `prominence` parameter is less significant than the others, but they are still all highly significant.
+According to the Wald, the `prominence` parameter is less significant than the others, as the $p$ value is higher than for the the intercept and height (0.000133 versus $<2 \cdot 10^{-16}$ for the other parameters). Nevertheless, they are all still highly significant, as the $p$ values are rather small.
 
-Calculating a 95 % CI:
+A $(1-\alpha)\cdot 100 \%$ confidence interval (CI) for a parameter $\beta_i$ is
+
+$$
+\left[ \hat{\beta}_{i,L}, \hat{\beta}_{i,H} \right] = \left[ \hat{\beta}_i-z_{\alpha/2} \sqrt{a_{ii}(\hat{\beta})}, \hat\beta_i + z_{\alpha/2} \sqrt{a_{ii}(\hat\beta) } \right],
+$$
+where $a_{ii}$ is the $i$th diagonal entry of the inverse of the expected Fisher information matrix $F(\beta)$. For the height parameter this CI becomes
 ```{r}
 sds = sqrt(summary(model1)$cov.scaled[2,2])
 alpha = 0.05
@@ -78,14 +86,11 @@ upper = model1$coefficients[2] + qnorm(1 - alpha/2) * sds
 cbind(lower, upper)
 ```
 
-
 As can be seen, a 95 % CI for the height parameter is $[\hat \beta_L, \hat \beta_H] = [-0.00191, -0.00136]$.
 
-A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. 
-This means that the when $x_1$ increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with factor lying in the interval $[0.9981,0.9986]$.   
+A corresponding CI for $[\exp{\hat \beta_L}, \exp{\hat \beta_H}]$ is  $[0.9981,0.9986]$. This means that when the height, $x_1$, increases by 1, the odds of successfully climbing a 1 m taller mountain is, with 95 % certainty, multiplied with a factor lying in the interval $[0.9981,0.9986]$.   
 
 ## c)
-
 The saturated model with one estimated parameter per data point is given by
 
 \begin{align}
@@ -121,6 +126,119 @@ ggplot(plotdf, aes(x=height, y=dres)) +geom_point() + labs(x ="Height", y="Devia
 ggplot(plotdf, aes(x=prom, y=dres)) +geom_point() + labs(x ="Prominence", y="Deviance residuals" )
 ```
 
+## d)
+When calculating the probability of successfully climbing Mount Everest, with height and prominence 8848 m, i.e. $x_1=x_2=8848$, the linear predictor can be found by
+
+$$
+\eta_\text{Mount Everest}=\beta_0+\beta_1 \cdot 8848 + \beta_2 \cdot 8848,
+$$
+which is equal to 
+```{r}
+eta = model1$coefficients[1]+model1$coefficients[2]*8848+model1$coefficients[3]*8848
+eta
+```
+
+Then the probability of climbing the mountain can be calculated by
+
+\begin{equation}
+\label{pi}
+\pi_\text{Mount Everest} = \frac{\exp (\eta_\text{Mount Everest})}{1 + \exp(\eta_\text{Mount Everest})},
+\end{equation}
+
+which is equal to 
+
+```{r}
+prob = exp(eta)/(1+exp(eta))
+prob
+```
+
+That is, there is a probability of $8.9 \%$ to successfully climb Mount Everest.
+Using the fact that the asymptotic distribution of the $\hat \beta \sim N_p \left(\mathbf{\beta}, F^{-1}(\mathbf{\hat\beta} ) \right)$, $\eta_i = \mathbf{x_i}^\top \mathbf{\beta}$ is a linear combination of normally distributed variables and is then normally distributed. The mean is $\mathbf{x_i}^\top \mathbf{\beta}$ and the variance is $\text{Cov}(\mathbf{x}_i^\top \mathbf{\beta}) = \mathbf{x}_i^\top \text{Cov}(\beta) \mathbf{x}_i$. With  $\mathbf{x}_\text{Mount Everest} =\left[1, 8848, 8848 \right]^\top$ the variance and standard deviation then becomes
+
+```{r}
+covbeta = vcov(model1)
+xvec = c(1,8848,8848)
+etavar = t(xvec)%*%covbeta%*%xvec
+print("Variance")
+etavar
+etasdev = sqrt(etavar)
+print("Standard deviation")
+etasdev
+```
+Then the $95 \%$ CI of the linear predictor can be calculated as
+
+$$
+\left[\eta_L, \eta_U \right] = \left[ \eta_\text{Mount Everest} - z_{0.025} \cdot \sigma_\eta, \eta_\text{Mount Everest} + z_{0.025} \cdot \sigma_\eta \right]
+$$
+which is equal to 
+
+```{r}
+lower = eta - qnorm(0.975)*etasdev
+upper = eta + qnorm(0.975)*etasdev
+print("Lower limit")
+lower
+print("Upper limit")
+upper
+```
+So a $95 \%$ CI for the linear predictor for climbing Mount Everest is given by $\left[-2.846,-1.801 \right]$. A corresponding CI for the probability of climbing Mount Everest can then be calculated by using the formula $\pi = \exp(\eta)/(1+\exp(\eta))$. Inserting the values for $\eta_L$ and $\eta_U$ to get the lower and upper limit of the probability one can calculate the $95 \%$ CI for the probability of ascending Mount Everest as
+
+$$
+\left[\pi_L,\pi_U \right] = \left[\frac{\exp(\eta_L)}{1+\exp(\eta_L)} , \frac{\exp(\eta_U)}{1+\exp(\eta_U)}\right]
+$$
+where the numerical values are
+```{r}
+plower = exp(lower)/(1+exp(lower))
+pupper = exp(upper)/(1+exp(upper))
+print("Lower limit")
+plower
+print("Upper limit")
+pupper
+```
+So the $95 \%$ CI of the probability of climbing Mount Everest is $[0.0549, 0.142]$. In another words, one can say with $95 \%$ confidence that between $5.49 \%$ and $14.2 \%$ of those who attempt to climb the mountain succeed in doing so, based on this model.
+From the Wikipedia page there has been 145 ascents and 121 failed attempts of climbing the mountain, so based on this it should be a probability of $\frac{145}{145+121} \approx 0.545$ to successfully climb it. This is much higher than the upper limit of the probability of ascending the mountain based on the model, so the model is rather pessimistic. Based on this, the model is not very reasonable.
+
+As for Chogolisa, with height $x_1=7665$ and prominence $x_2 = 1624$ we get that the linear predictor $\eta_\text{Chogolisa}$ is
+
+```{r}
+etachog = model1$coefficients[1] + model1$coefficients[2]*7665+model1$coefficients[3]*1624
+etachog
+```
+
+Then the probability of successfully climbing Chogolisa is, using \eqref{pi},
+```{r}
+exp(etachog)/(1+exp(etachog))
+```
+That is, there is a $70 \%$ probability of successfully climb Chogolisa. Calculating the $95 \%$ CI for $\eta_\text{Chogolisa}$:
+
+```{r}
+xvecchog = c(1, 7665,1624)
+etachogvar = t(xvecchog)%*%covbeta%*%xvecchog
+etachogsd = sqrt(etachogvar)
+```
+
+Then the $95 \%$ CI for $\eta_\text{Chogolisa}$ is
+
+```{r}
+letachog = etachog - qnorm(0.975)*etachogsd
+print("Lower limit")
+letachog
+
+uetachog = etachog + qnorm(0.975)*etachogsd
+print("Upper limit")
+uetachog
+```
+That is, a $95 \%$ CI for the linear predictor is then $[0.769,0.967]$. Using \eqref{pi} the $95 \%$ CI for the probability of climbing Chogolisa is
+
+```{r}
+print("Lower limit")
+exp(letachog)/(1+exp(letachog))
+print("Upper limit")
+exp(uetachog)/(1+exp(uetachog))
+```
+So a $95 \%$ CI for the probability of successfully climbing Chogolisa is $[0.683,0.725]$.
+
+
+# Part 2: Poisson regression
 In figures \ref{fig:dresheight} and \ref{fig:dresprom} the deviance residuals are plotted vs `height` and `prominence`, respectively.
 There is no obvious trend in either of the plots.
 The deviance residuals seem to have mean and variance independent of both covariates.
