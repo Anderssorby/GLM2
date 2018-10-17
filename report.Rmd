@@ -113,7 +113,8 @@ d_i = \text{sign}(y_i-\hat{y}_i)\sqrt{D_i} =\text{sign}(y_i-\hat{y}_i)\sqrt{2\ln
 
 ```{r residuals, fig.cap="\\label{fig:dresheight} Deviance residuals as a function of height."}
 dres <- residuals(model1, type = "deviance")
-plotdf <- data.frame(dres = dres, fitted = model1$fitted.values, height=mount$height, prom = mount$prominence)
+plotdf <- data.frame(dres = dres, fitted = model1$fitted.values,
+                     height=mount$height, prom = mount$prominence)
 ggplot(plotdf, aes(x=height, y=dres)) +geom_point() + labs(x ="Height", y="Deviance residuals" )
 ```
 
@@ -176,6 +177,13 @@ library(GGally)
 #ggpairs(tippeliga)
 ```
 
+The loglikelihood for Poisson regression is
+
+\begin{align}
+\ell(\beta) &= \ln \prod_{i=1}^n \frac{\lambda_i^{y_i}}{y_i!} e^{-\lambda_i} \\
+            &= \sum_{i=1}^n\left[y_i \ln(\lambda_i) - \ln(y_i!) - \lambda_i\right]
+\end{align}
+
 ```{r myglm}
 source('myglm.R')
 ```
@@ -192,6 +200,8 @@ Independence between the goals of the home and the away team is questionable. It
 ```
 
 ## b)
+
+
 ```{r useglm}
 model2b <- myglm(yh ~ home + away + ya, data = tippeliga)
 summary(model2b)
