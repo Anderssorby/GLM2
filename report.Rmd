@@ -133,8 +133,8 @@ ggplot(plotdf, aes(x=height, y=dres)) +geom_point() + labs(x ="Height", y="Devia
 ggplot(plotdf, aes(x=prom, y=dres)) +geom_point() + labs(x ="Prominence", y="Deviance residuals" )
 ```
 
-<<<<<<< HEAD
 ## d)
+
 When calculating the probability of successfully climbing Mount Everest, with height and prominence 8848 m, i.e. $x_1=x_2=8848$, the linear predictor can be found by
 
 $$
@@ -257,7 +257,6 @@ qqnorm(dres,main=" ")
 qqline(dres,col = 2)
 ```
 
->>>>>>> 802bba24c2c9ca3918ad19251adb3da6c021d153
 In figures \ref{fig:dresheight} and \ref{fig:dresprom} the deviance residuals are plotted vs `height` and `prominence`, respectively.
 There is no obvious trend in either of the plots.
 The deviance residuals seem to have mean and variance independent of each covariate.
@@ -278,9 +277,6 @@ p <- length(model1$coefficients)
 ```
 
 In other words we are forced to reject the hypothesis that the model fits the data well.
-
-
-## d)
 
 The following code produces a plot of our model's fitted value for the probability of a successful ascent as a function of `height` and `prominence`.
 
@@ -357,15 +353,31 @@ Independence between the goals of the home and the away team is questionable. It
 
 ## b)
 
+```{r prelimrank}
+prelim <- data.frame(team = unique(tippeliga$home), points = rep(0,16), goaldiff = rep(0,16))
+for (i in 1:length(tippeliga[,1])){
+  goaldiff <- tippeliga$yh[i] - tippeliga$ya[i]
+  prelim[prelim$team==tippeliga$home[i],]$goaldiff <- prelim[prelim$team==tippeliga$home[i],]$goaldiff + goaldiff
+  
+  prelim[prelim$team==tippeliga$away[i],]$goaldiff <- prelim[prelim$team==tippeliga$away[i],]$goaldiff - goaldiff
+  if (goaldiff > 0){
+    prelim[prelim$team==tippeliga$home[i],]$points <- prelim[prelim$team==tippeliga$home[i],]$points + 3
+  }else if(goaldiff <0){
+    prelim[prelim$team==tippeliga$away[i],]$points <- prelim[prelim$team==tippeliga$away[i],]$points + 3
+  }else{
+    prelim[prelim$team==tippeliga$home[i],]$points <- prelim[prelim$team==tippeliga$home[i],]$points + 1
+    prelim[prelim$team==tippeliga$away[i],]$points <- prelim[prelim$team==tippeliga$away[i],]$points + 1
+  }
+}
+prelim[order(-prelim$points,-prelim$goaldiff),]
+```
+
+## c)
 
 ```{r useglm}
 model2b <- myglm(yh ~ home + away + ya, data = tippeliga)
 summary(model2b)
 ```
-
-## c)
-
-
 
 ## d)
 
