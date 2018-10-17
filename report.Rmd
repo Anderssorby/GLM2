@@ -49,7 +49,13 @@ For some models this can be expressed on closed form by solving
 s(\hat \beta) = \frac{\partial \ell(\hat \beta)}{\partial \beta} = 0
 \end{align}
 
-In this case the equations above are non-linear, and the maximum is found using numerical methods like Newton-Raphson or Fisher scoring.
+In this case the equations above are non-linear, and the maximum is found using numerical methods like Newton-Raphson or Fisher scoring. In the case of Fisher scoring that means iterating
+
+\begin{equation}
+\beta^{(t+1)}=\beta^{(t)} + F(\beta^{(t)})^{-1}s(\beta^{(t)}),
+\end{equation}
+
+where F is the expected Fisher information, given by $F = \mathrm{Cov}(s(\beta))$
 
 ## b)
 
@@ -111,22 +117,51 @@ The deviance residuals are then
 d_i = \text{sign}(y_i-\hat{y}_i)\sqrt{D_i} =\text{sign}(y_i-\hat{y}_i)\sqrt{2\ln \frac{y_i}{\hat{y}_i}}
 \end{align}
 
-```{r residuals, fig.cap="\\label{fig:dresheight} Deviance residuals as a function of height."}
+```{r dresheight, fig.cap="\\label{fig:dresheight} Deviance residuals as a function of height."}
 dres <- residuals(model1, type = "deviance")
 plotdf <- data.frame(dres = dres, fitted = model1$fitted.values,
                      height=mount$height, prom = mount$prominence)
 ggplot(plotdf, aes(x=height, y=dres)) +geom_point() + labs(x ="Height", y="Deviance residuals" )
 ```
 
-```{r resprominence, fig.cap="\\label{fig:dresprom} Deviance residuals as a function of prominence."}
+```{r dresprominence, fig.cap="\\label{fig:dresprom} Deviance residuals as a function of prominence."}
 ggplot(plotdf, aes(x=prom, y=dres)) +geom_point() + labs(x ="Prominence", y="Deviance residuals" )
+```
+
+```{r dresiduals, fig.cap="\\label{fig:dresiduals} Deviance residuals as a function of the fitted value."}
+ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
+```
+
+```{r dresqq, fig.cap="\\label{fig:dresqq} A normal Q-Q plot comparing the deviance residuals to a standard normal distribution. "}
+qqnorm(dres,main=" ")
+qqline(dres,col = 2)
 ```
 
 In figures \ref{fig:dresheight} and \ref{fig:dresprom} the deviance residuals are plotted vs `height` and `prominence`, respectively.
 There is no obvious trend in either of the plots.
-The deviance residuals seem to have mean and variance independent of both covariates.
+The deviance residuals seem to have mean and variance independent of each covariate.
+When the deviance residuals are plotted as a function of the fitted values in figure \ref{fig:dresiduals} it becomes harder to gauge, but it does seem like the deviance residuals have higher variance for the highest fitted values.
+The Q-Q plot in figure \ref{fig:dresqq} indicates that the deviance residuals are reasonably close to being normally distributed.
+Asymptotically, under the hypothesis that we have a good model, the deviance residuals should follow a standard normal distribution, but our observed sample variance is $3.634$.
+In other words it is a good idea to test that hypothesis.
 
-ASSESSMENT OF MODEL FIT USING MODEL DEVIANCE.
+From Wilks' theorem we have $D \sim \chi^2_{n-p}$.
+In our case the model deviance is found to be $414.68$, which is much higher than the $110$ degrees of freedom.
+The likelihood of such an extreme deviance for a good model is found to be $0$.
+
+```{r modeldeviance}
+D <- deviance(model1)
+n <- dim(mount)[1]
+p <- length(model1$coefficients)
+1-pchisq(D,df=n-p)
+```
+
+In other words we are forced to reject the hypothesis that the model fits the data well.
+
+
+## d)
+
+The following code produces a plot of our model's fitted value for the probability of a successful ascent as a function of `height` and `prominence`.
 
 ```{r probplot,fig.cap="\\label{fig:probabilities} The probability of a successful ascent as a function of both height and prominence."}
 steps <- 100
@@ -157,7 +192,7 @@ for (i in 1:steps){
 }
 
 probsdf <- data.frame(prob=probs, he=hcoord, pr=pcoord)
-ggplot(data = probsdf, aes(x=he, y=pr)) + geom_raster(aes(fill=prob)) + scale_fill_gradientn(colours = terrain.colors(10)) +labs(x="Height",y="Prominence",colour="Probability") 
+ggplot(data = probsdf, aes(x=he, y=pr)) + geom_raster(aes(fill=prob)) + scale_fill_gradientn(colours = terrain.colors(10)) +labs(x="Height",y="Prominence",z="Probability") 
 ```
 
 Figure \ref{fig:probabilities} shows how the probability of a successful ascent depends on both covariates.
