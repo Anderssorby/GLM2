@@ -2,26 +2,73 @@
 # Select Build, Build and reload to build and lode into the R-session.
 
 myglm <- function(formula, data = list(), contrasts = NULL, family = "poisson",
-                  response = log,...){
+                  response = exp,...){
   # Extract model matrix & responses
   mf <- model.frame(formula = formula, data = data)
-  X  <- model.matrix(attr(mf, "terms"), data = mf, contrasts.arg = contrasts)
+  x  <- model.matrix(attr(mf, "terms"), data = mf, contrasts.arg = contrasts)
   y  <- model.response(mf)
   terms <- attr(mf, "terms")
   
-  n <- nrow(X)
+  p <- ncol(x)
+  n <- nrow(x)
   # Add code here to calculate coefficients, residuals, fitted values, etc...
   # and store the results in the list est
   est <- list(terms = terms, model = mf)
+  logLikelihood <- NULL
+  scoreFunction <- NULL
   
   if (family == "poisson") {
-    scoreFunction <- function(beta) {
+    response <- exp
+    # the Poisson log-likelihood
+    logLikelihood <- function(beta) {
+      sum <- 0
       for (i in range(1, n)) {
-        eta_i <- t(beta) %*% X[i]
-        
+        eta_i <- t(x[i,]) %*% beta
+        lambda_i <- response(eta_i)
+        sum <- sum + y[i]*log(lambda_i) - log(factorial(y[i])) - lambda_i
+      }
+      return(sum)
+    }
+    responsePrime <- exp
+    
+    scoreFunction <- function(beta) {
+      sum <- rep(0, p)
+      for (i in range(1, n)) {
+        eta_i <- t(x[i,]) %*% beta
+        sum <- sum + (y[i]/responsePrime(eta_i) + responsePrime(eta_i)) * x[i,]
       }
     }
+  } else {
+    stop(sprintf("Unknown family %s", family))
   }
+  
+  beta_init <- rep(0, p)
+  est$result <- optim(beta_init, fn = logLikelihood, gr = scoreFunction, method = 'BFGS', hessian = TRUE)
+  est$betaHat <- est$result$par
+  
+  est$yhat <- yhat <- x %*% betaHat
+  est$residuals <- residuals <- y - yhat
+  est$dof <- dof <- n-length(beta)
+  est$ssr <- ssr <- sum(residuals^2) # Residual sum of squares
+  est$rse <- rse <- sqrt(ssr/dof) # Residual standard error
+  est$sst <- sst <- sum((y-mean(y))^2)  # Total sum of squares
+  est$sse <- sse <- sst-ssr
+  est$r2 <- r2 <- 1-ssr/sst # R^2
+  est$r2adj <- r2adj <- 1-(1-r2)*(n-1)/(n-length(beta))
+  est$Fstat <- Fstat <- (sse)/(length(beta) - 1) * (n-p)/ssr # F-statistic
+  est$Fpval <- Fpval <- 1-pchisq(Fstat*(p-1), df = p-1)
+  
+  # z-test
+  statistics <- rep(0, p)
+  pvalues <- rep(0, p)
+  for (j in 1:p) {
+    statistics[j] <- beta[j] / sqrt(covar[j, j])
+    pvalues[j] <- 2*(1-pnorm(abs(statistics[j])))
+  }
+  # Store call and formula used
+  est$statistics <- statistics
+  est$pvalues <- pvalues
+  
   # Store call and formula used
   est$call <- match.call()
   est$formula <- formula
@@ -33,19 +80,40 @@ myglm <- function(formula, data = list(), contrasts = NULL, family = "poisson",
   return(est)
 }
 
-print.myglm <- function(object, ...){
+print.myglm <- function(est, ...){
   # Code here is used when print(object) is used on objects of class "myglm"
   # Useful functions include cat, print.default and format
-  cat('Info about object\n')
+  cat("Call:\nmylm : formula = ")
+  print(est$formula)
+  cat('\nCoefficients:\n')
+  v = as.vector(as.numeric(format(est$beta, digits = 4, nsmall = 4, trim = T))) # formatting s.t. there are only five decimals
+  names(v) = rownames(est$beta)
+  v
 }
 
-summary.myglm <- function(object, ...){
+summary.myglm <- function(est, ...){
   # Code here is used when summary(object) is used on objects of class "myglm"
   # Useful functions include cat, print.default and format
-  cat('Summary of object\n')
+  cat('Summary of myglm\n\n')
+  
+  cat("Residuals: \n")
+  v = quantile(est$residuals, names = T)
+  names(v) = c("Min", "1Q", "Median", "3Q", "Max")
+  print(v, digits = 3)
+  
+  cat("\nCoefficients:\n")
+  
+  mat = as.matrix(cbind(est$beta, sqrt(diag(est$covar)), est$statistics, est$pvalues))
+  colnames(mat) = c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
+  print(mat, digits = 4)    # how many digits?
+  cat("---\n")
+  cat("Signif. codes:\t0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1")
+  cat("\n\nResidual standard error:", est$rse, "on", est$dof, "degrees of freedom\n")
+  cat("Multiple R-squared:", est$r2, "\tAdjusted R-squared:", est$r2adj, "\n")
+  cat("F-statistic:", est$Fstat, "on", length(est$beta)-1, "and", est$dof, "DF, p-value: <", est$Fpval, "\n")
 }
 
-plot.myglm <- function(object, ...){
+plot.myglm <- function(est, ...){
   # Code here is used when plot(object) is used on objects of class "myglm"
   
   library(ggplot2)
@@ -95,9 +163,8 @@ anova.myglm <- function(object, ...){
 # You can put these functions somewhere else, but it is practical to keep them with the other functions you create
 # optim requires thtat the first argument of the function optim shall optimize is the parameters over which minimization is to take place (par)
 # it is common to include all other necessary arguments in a list called "args", but this can be done other ways as well
-loglik_poi <- function(par, args = list()){
+loglik_poi <- function(par, args = list(n = )){
   
-  # the Poisson log-likelihood
   
 }
 
