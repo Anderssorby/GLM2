@@ -247,7 +247,6 @@ So a $95 \%$ CI for the probability of successfully climbing Chogolisa is $[0.68
 
 
 # Part 2: Poisson regression
-=======
 ```{r dresiduals, fig.cap="\\label{fig:dresiduals} Deviance residuals as a function of the fitted value."}
 ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
 ```
@@ -344,45 +343,41 @@ source('myglm.R')
 
 The Pearson $\chi^2$-test is used to test goodness of fit, homogeneity and independece of some data. In this case a test for independence via a contingency table is necessary, as independence between the goals of the home and the away team is questionable. It seems natural that if the away team has more goals the home team would have less due to an intuitive correlation with ball possession, which is a zero sum game. However the probability for goals may be more related to the difference in power of the two teams. 
 
+To test the null hypothesis of independence we compare the observed frequency for each combination of home and away goals scored, with the theoretical frequency.
+The theoretical frequency, given the hypothesis of independence, is
+
+\begin{equation}
+E_{i,j} = N p_{i\cdot} p_{\cdot j}
+\end{equation}
+
+where $N$ is the total number of games, $p_{i\cdot}$ is the fraction of games where the goals scored by the hometeam were of category $i$, and likewise for $p_{\cdot j}$.
+The fractions are easily found from the observations $O_{i,j}$ by
+
+\begin{equation}
+p_{i\cdot} = \sum_{j}\frac{O_{i,j}}{N}
+\end{equation}
+
+The test-statistic is then given by
+
+\begin{equation}
+\chi^2 = \sum_i \sum_j \frac{(O_{i,j}-E_{i,j})^2}{N}
+\end{equation}
 ```{r contingencytable}
-ngames <- length(tippeliga[,1])
-yhm <- max(tippeliga$yh) + 1
-yam <- max(tippeliga$ya) + 1
-ctable <- matrix(nrow=yhm, ncol=yam)
-dimnames(ctable) = list(c("yh=0","yh=1","yh=2","yh=3","yh=4","yh=5"),c("ya=0","ya=1","ya=2","ya=3","ya=4","ya=5","ya=6"))
-for(i in 1:yhm){
-  for (j in 1:yam){
-    ctable[i,j] <- sum(tippeliga$ya[tippeliga$yh==(i-1)]==(j-1))
-  }
-}
-
-homerate <- exp(glm(tippeliga$yh ~ 1, family=poisson)$coefficient[1])
-awayrate <- exp(glm(tippeliga$ya ~ 1, family=poisson)$coefficient[1])
-
-ptable <- matrix(nrow=yhm, ncol=yam)
-for(i in 1:yhm){
-  for (j in 1:yam){
-    ptable[i,j] <- dpois(i-1,lambda=homerate)*dpois(j-1,lambda=awayrate)
-  }
-}
-
-etable <- ptable*ngames
-
-chisq <- sum((ctable-etable)^2/etable)
-pchisq <- pchisq(chisq,df=30)
-pchisq
+otable <- table(tippeliga$yh,tippeliga$ya)
+ctable <- otable[1:5,1:5]
+ctable[,5] <- ctable[,5] + otable[1:5,6]
+ctable[5,] <- ctable[5,] + otable[6,1:5]
+ctable
+chisq.test(ctable)
 ```
 
-The $\chi^2$ test on 30 degrees of freedom shows that there is no evidence against the assumption of independence. INCLUDE FORMULAS FOR, REVIEW CALCULATION (POSSIBLE PROBLEM: probabilities sum to 0.991...)
-
-```{r } 
-
-#chisq.test(X, y)
-```
+Note that the $\chi^2$ test ends up being on 16 degrees of freedom.
+This is because we consider 4, 5 or 6 goals to be of the same category, namely 4+ goals.
+The test gives a p-value of 0.5871, which means that there is no evidence against the assumption of independence. 
 
 ## b)
 
-The preliminary rankings as of the 1st of October is easily determined from the match data.
+The preliminary rankings as of the 1st of October are easily determined from the match data.
 
 ```{r prelimrank}
 prelim <- data.frame(team = unique(tippeliga$home), points = rep(0,16), goaldiff = rep(0,16))
