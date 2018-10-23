@@ -342,7 +342,7 @@ source('myglm.R')
 
 ## a)
 
-The Pearson $\chi^2$-test is used to test goodness of fit, homogeneity and independece of some data. In this case a test for independence via a contingency table is necessary, as independence between the goals of the home and the away team is questionable. It seems natural that if the away team has more goals the home team would have less due to an intuitive correlation with ball possession, which is a zero sum game.
+The Pearson $\chi^2$-test is used to test goodness of fit, homogeneity and independece of some data. In this case a test for independence via a contingency table is necessary, as independence between the goals of the home and the away team is questionable. It seems natural that if the away team has more goals the home team would have less due to an intuitive correlation with ball possession, which is a zero sum game. However the probability for goals may be more related to the difference in power of the two teams. 
 
 ```{r contingencytable}
 ngames <- length(tippeliga[,1])

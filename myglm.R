@@ -37,6 +37,7 @@ myglm <- function(formula, data = list(), contrasts = NULL, family = "poisson",
         eta_i <- t(x[i,]) %*% beta
         sum <- sum + (y[i]/responsePrime(eta_i) + responsePrime(eta_i)) * x[i,]
       }
+      return(sum)
     }
   } else {
     stop(sprintf("Unknown family %s", family))
@@ -44,25 +45,26 @@ myglm <- function(formula, data = list(), contrasts = NULL, family = "poisson",
   
   beta_init <- rep(0, p)
   est$result <- optim(beta_init, fn = logLikelihood, gr = scoreFunction, method = 'BFGS', hessian = TRUE)
-  est$betaHat <- est$result$par
+  est$betaHat <- betaHat <- est$result$par
+  est$covar <- covar <- est$result$hessian
   
   est$yhat <- yhat <- x %*% betaHat
   est$residuals <- residuals <- y - yhat
-  est$dof <- dof <- n-length(beta)
+  est$dof <- dof <- n-p
   est$ssr <- ssr <- sum(residuals^2) # Residual sum of squares
   est$rse <- rse <- sqrt(ssr/dof) # Residual standard error
   est$sst <- sst <- sum((y-mean(y))^2)  # Total sum of squares
   est$sse <- sse <- sst-ssr
   est$r2 <- r2 <- 1-ssr/sst # R^2
-  est$r2adj <- r2adj <- 1-(1-r2)*(n-1)/(n-length(beta))
-  est$Fstat <- Fstat <- (sse)/(length(beta) - 1) * (n-p)/ssr # F-statistic
+  est$r2adj <- r2adj <- 1-(1-r2)*(n-1)/(n-p)
+  est$Fstat <- Fstat <- (sse)/(p - 1) * (n-p)/ssr # F-statistic
   est$Fpval <- Fpval <- 1-pchisq(Fstat*(p-1), df = p-1)
   
   # z-test
   statistics <- rep(0, p)
   pvalues <- rep(0, p)
   for (j in 1:p) {
-    statistics[j] <- beta[j] / sqrt(covar[j, j])
+    statistics[j] <- betaHat[j] / sqrt(covar[j, j])
     pvalues[j] <- 2*(1-pnorm(abs(statistics[j])))
   }
   # Store call and formula used
@@ -86,8 +88,8 @@ print.myglm <- function(est, ...){
   cat("Call:\nmylm : formula = ")
   print(est$formula)
   cat('\nCoefficients:\n')
-  v = as.vector(as.numeric(format(est$beta, digits = 4, nsmall = 4, trim = T))) # formatting s.t. there are only five decimals
-  names(v) = rownames(est$beta)
+  v = as.vector(as.numeric(format(est$betaHat, digits = 4, nsmall = 4, trim = T))) # formatting s.t. there are only five decimals
+  names(v) = rownames(est$betaHat)
   v
 }
 
@@ -103,7 +105,7 @@ summary.myglm <- function(est, ...){
   
   cat("\nCoefficients:\n")
   
-  mat = as.matrix(cbind(est$beta, sqrt(diag(est$covar)), est$statistics, est$pvalues))
+  mat = as.matrix(cbind(est$betaHat, sqrt(diag(est$covar)), est$statistics, est$pvalues))
   colnames(mat) = c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
   print(mat, digits = 4)    # how many digits?
   cat("---\n")
