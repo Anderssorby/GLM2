@@ -245,8 +245,6 @@ exp(uetachog)/(1+exp(uetachog))
 ```
 So a $95 \%$ CI for the probability of successfully climbing Chogolisa is $[0.683,0.725]$.
 
-
-# Part 2: Poisson regression
 ```{r dresiduals, fig.cap="\\label{fig:dresiduals} Deviance residuals as a function of the fitted value."}
 ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
 ```
@@ -350,7 +348,7 @@ The theoretical frequency, given the hypothesis of independence, is
 E_{i,j} = N p_{i\cdot} p_{\cdot j}
 \end{equation}
 
-where $N$ is the total number of games, $p_{i\cdot}$ is the fraction of games where the goals scored by the hometeam were of category $i$, and likewise for $p_{\cdot j}$.
+where $N$ is the total number of games, $p_{i\cdot}$ is the fraction of games where the goals scored by the home team were of category $i$, and $p_{\cdot j}$ corresponds to the away team.
 The fractions are easily found from the observations $O_{i,j}$ by
 
 \begin{equation}
@@ -373,7 +371,8 @@ chisq.test(ctable)
 
 Note that the $\chi^2$ test ends up being on 16 degrees of freedom.
 This is because we consider 4, 5 or 6 goals to be of the same category, namely 4+ goals.
-The test gives a p-value of 0.5871, which means that there is no evidence against the assumption of independence. 
+This is done to avoid having too many low frequencies in our table, since low expected counts give large contributions the the total value of the test statistic.
+The test gives a p-value of 0.5871, which means that there is no evidence against the assumption of independence.
 
 ## b)
 
