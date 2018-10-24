@@ -418,6 +418,46 @@ model2b <- myglm(yh ~ home + away + ya, data = tippeliga)
 summary(model2b)
 ```
 
+```{r designmatrix, warning=FALSE}
+X <- matrix(0,nrow=384, ncol=18)
+goals <- vector(length = 384)
+
+X[,1] <- rep(1,384)
+X[,2] <- rep(c(1,0),192)
+teams <- tippeliga$home[order(unique(tippeliga$home))]
+colnames(X) <- c("intercept","homeadvantage",teams)
+
+for (i in 1:length(tippeliga[,1])) {
+  home <- tippeliga$home[i]
+  away <- tippeliga$away[i]
+  # Home team
+  X[2*i-1, home] <- 1
+  X[2*i-1, away] <- -1
+  # Away team
+  X[2*i, home] <- -1
+  X[2*i, away] <- 1
+  # Goals
+  goals[2*i-1] <- tippeliga$yh[i]
+  goals[2*i] <- tippeliga$ya[i]
+}
+X <- X[,c(1:2,4:18)] # remove linear dependency
+
+model2glm <- glm(goals ~ -1 + X, family = "poisson")
+summary(model2glm)
+```
+```{r ranking}
+str=c(0,unname(model2glm$coefficients[3:17]))
+ranking <- data.frame(team = teams, strength=str,multiplier=exp(str))
+ranking[order(-ranking$strength),]
+```
+
+This strength based ranking agrees well with the preliminary ranking found above.
+Some notable differences are the second and third place teams switching place, Ranheim dropping from 6th all the way to 11th place and Stroemsgodset moving from 12th up to 8th.
+It seems like teams with high goal difference compared to their neighbours in the preliminary ranking tend to be higher on the strength based ranking.
+In fact, the strength based ranking agrees even better with the preliminary ranking sorted by goal differences instead of points.
+This makes sense as winning (losing) matches by multiple goals results in a higher (lower) strength parameter, but does not give (cost) additional points.
+The differences in order between the strength based ranking and the goal differences are due to the model accounting for whether teams score (or are scored against) versus good or bad teams.
+
 ## d)
 
 ```{r}
