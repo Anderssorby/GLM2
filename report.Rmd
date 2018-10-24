@@ -73,9 +73,17 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
-The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. 
 
-When hypothesis testing whether a single model parameter $\beta_i = 0$ or not, the Wald test and the Z test are equivalent since the Wald statistic then becomes the Z statistic squared, which obviously is $\chi^2$.
+\begin{align*}
+\frac{P(Y_i=1\mid x_{i1}+1)}{P(Y_i=0)\mid x_{i1}+1)}&=\exp(\beta_0)\cdot \exp(\beta_1 (x_{i1}+1))\cdots\exp(\beta_k x_{ik})\\
+&=\exp(\beta_0)\cdot \exp(\beta_1 x_{i1})\exp(\beta_1)\cdots\exp(\beta_k x_{ik})\\
+&=\frac{P(Y_i=1\mid x_{i1})}{P(Y_i=0\mid x_{i1})}\cdot \exp(\beta_1)\\
+\end{align*}
+
+More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+
+When hypothesis testing whether a single model parameter $\beta_i = 0$ or not, the Wald test and the Z test are equivalent since the Wald statistic then becomes the Z statistic squared, which by definition is then $\chi^2$.
 According to the Wald, the `prominence` parameter is less significant than the others, as the $p$ value is higher than for the the intercept and height (0.000133 versus $<2 \cdot 10^{-16}$ for the other parameters). Nevertheless, they are all still highly significant, as the $p$ values are rather small.
 
 A $(1-\alpha)\cdot 100 \%$ confidence interval (CI) for a parameter $\beta_i$ is
@@ -132,6 +140,74 @@ ggplot(plotdf, aes(x=height, y=dres)) +geom_point() + labs(x ="Height", y="Devia
 ```{r dresprominence, fig.cap="\\label{fig:dresprom} Deviance residuals as a function of prominence."}
 ggplot(plotdf, aes(x=prom, y=dres)) +geom_point() + labs(x ="Prominence", y="Deviance residuals" )
 ```
+
+```{r dresiduals, fig.cap="\\label{fig:dresiduals} Deviance residuals as a function of the fitted value."}
+ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
+```
+
+```{r dresqq, fig.cap="\\label{fig:dresqq} A normal Q-Q plot comparing the deviance residuals to a standard normal distribution. "}
+qqnorm(dres,main=" ")
+qqline(dres,col = 2)
+```
+
+In figures \ref{fig:dresheight} and \ref{fig:dresprom} the deviance residuals are plotted vs `height` and `prominence`, respectively.
+There is no obvious trend in either of the plots.
+The deviance residuals seem to have mean and variance independent of each covariate.
+When the deviance residuals are plotted as a function of the fitted values in figure \ref{fig:dresiduals} it becomes harder to gauge, but it does seem like the deviance residuals have higher variance for the highest fitted values.
+The Q-Q plot in figure \ref{fig:dresqq} indicates that the deviance residuals are reasonably close to being normally distributed.
+Asymptotically, under the hypothesis that we have a good model, the deviance residuals should follow a standard normal distribution, but our observed sample variance is $3.634$.
+In other words it is a good idea to test that hypothesis.
+
+From Wilks' theorem we have $D \sim \chi^2_{n-p}$.
+In our case the model deviance is found to be $414.68$, which is much higher than the $110$ degrees of freedom.
+The likelihood of such an extreme deviance for a good model is found to be $0$.
+
+```{r modeldeviance}
+D <- deviance(model1)
+n <- dim(mount)[1]
+p <- length(model1$coefficients)
+1-pchisq(D,df=n-p)
+```
+
+In other words we are forced to reject the hypothesis that the model fits the data well.
+
+The following code produces a plot of our model's fitted value for the probability of a successful ascent as a function of `height` and `prominence`.
+
+```{r probplot,fig.cap="\\label{fig:probabilities} The probability of a successful ascent as a function of both height and prominence."}
+steps <- 100
+
+hmin <- min(plotdf$height)
+hmax <- max(plotdf$height)
+heights <- seq(hmin,hmax, length.out=steps)
+
+pmin <- min(plotdf$prom)
+pmax <- max(plotdf$prom)
+proms <- seq(pmin,pmax,length.out=steps)
+
+prob <- function(height, prom, model){
+  eta <- c(1,height,prom)%*%model$coefficients
+  res <- exp(eta)/(1+exp(eta))
+  return(res)
+}
+
+probs <- c()
+pcoord <- c()
+hcoord <- c()
+for (i in 1:steps){
+  for (j in 1:steps){
+    probs <- append(probs, prob(heights[i],proms[j],model1))
+    hcoord <- append(hcoord,heights[i])
+    pcoord <- append(pcoord,proms[j])
+  }
+}
+
+probsdf <- data.frame(prob=probs, he=hcoord, pr=pcoord)
+ggplot(data = probsdf, aes(x=he, y=pr)) + geom_raster(aes(fill=prob)) + scale_fill_gradientn(colours = terrain.colors(10)) +labs(x="Height",y="Prominence",z="Probability") 
+```
+
+Figure \ref{fig:probabilities} shows how the probability of a successful ascent depends on both covariates.
+According to the model the probability decreases monotonously with both `height` and `prominence`, and it is possible to compensate an increase in one covariate by decreasing the other.
+As expected the model predicts probabilities close to zero as both covariates increase and close to one as both decrease.
 
 ## d)
 
@@ -204,6 +280,7 @@ pupper
 ```
 So the $95 \%$ CI of the probability of climbing Mount Everest is $[0.0549, 0.142]$. In another words, one can say with $95 \%$ confidence that between $5.49 \%$ and $14.2 \%$ of those who attempt to climb the mountain succeed in doing so, based on this model.
 From the Wikipedia page there has been 145 ascents and 121 failed attempts of climbing the mountain, so based on this it should be a probability of $\frac{145}{145+121} \approx 0.545$ to successfully climb it. This is much higher than the upper limit of the probability of ascending the mountain based on the model, so the model is rather pessimistic. Based on this, the model is not very reasonable.
+A possible reason for the seemingly poor performance is Mount Everests very high prominence, which is unprecedented within our dataset.
 
 As for Chogolisa, with height $x_1=7665$ and prominence $x_2 = 1624$ we get that the linear predictor $\eta_\text{Chogolisa}$ is
 
@@ -244,74 +321,10 @@ print("Upper limit")
 exp(uetachog)/(1+exp(uetachog))
 ```
 So a $95 \%$ CI for the probability of successfully climbing Chogolisa is $[0.683,0.725]$.
-
-```{r dresiduals, fig.cap="\\label{fig:dresiduals} Deviance residuals as a function of the fitted value."}
-ggplot(plotdf, aes(x=fitted, y=dres)) +geom_point() + labs(x ="Fitted values", y="Deviance residuals" )
-```
-
-```{r dresqq, fig.cap="\\label{fig:dresqq} A normal Q-Q plot comparing the deviance residuals to a standard normal distribution. "}
-qqnorm(dres,main=" ")
-qqline(dres,col = 2)
-```
-
-In figures \ref{fig:dresheight} and \ref{fig:dresprom} the deviance residuals are plotted vs `height` and `prominence`, respectively.
-There is no obvious trend in either of the plots.
-The deviance residuals seem to have mean and variance independent of each covariate.
-When the deviance residuals are plotted as a function of the fitted values in figure \ref{fig:dresiduals} it becomes harder to gauge, but it does seem like the deviance residuals have higher variance for the highest fitted values.
-The Q-Q plot in figure \ref{fig:dresqq} indicates that the deviance residuals are reasonably close to being normally distributed.
-Asymptotically, under the hypothesis that we have a good model, the deviance residuals should follow a standard normal distribution, but our observed sample variance is $3.634$.
-In other words it is a good idea to test that hypothesis.
-
-From Wilks' theorem we have $D \sim \chi^2_{n-p}$.
-In our case the model deviance is found to be $414.68$, which is much higher than the $110$ degrees of freedom.
-The likelihood of such an extreme deviance for a good model is found to be $0$.
-
-```{r modeldeviance}
-D <- deviance(model1)
-n <- dim(mount)[1]
-p <- length(model1$coefficients)
-1-pchisq(D,df=n-p)
-```
-
-In other words we are forced to reject the hypothesis that the model fits the data well.
-
-The following code produces a plot of our model's fitted value for the probability of a successful ascent as a function of `height` and `prominence`.
-
-```{r probplot,fig.cap="\\label{fig:probabilities} The probability of a successful ascent as a function of both height and prominence."}
-steps <- 100
-
-hmin <- min(plotdf$height)
-hmax <- max(plotdf$height)
-heights <- seq(hmin,hmax, length.out=steps)
-
-pmin <- min(plotdf$prom)
-pmax <- max(plotdf$prom)
-proms <- seq(pmin,pmax,length.out=steps)
-
-prob <- function(height, prom, model){
-  eta <- c(1,height,prom)%*%model$coefficients
-  res <- exp(eta)/(1+exp(eta))
-  return(res)
-}
-
-probs <- c()
-pcoord <- c()
-hcoord <- c()
-for (i in 1:steps){
-  for (j in 1:steps){
-    probs <- append(probs, prob(heights[i],proms[j],model1))
-    hcoord <- append(hcoord,heights[i])
-    pcoord <- append(pcoord,proms[j])
-  }
-}
-
-probsdf <- data.frame(prob=probs, he=hcoord, pr=pcoord)
-ggplot(data = probsdf, aes(x=he, y=pr)) + geom_raster(aes(fill=prob)) + scale_fill_gradientn(colours = terrain.colors(10)) +labs(x="Height",y="Prominence",z="Probability") 
-```
-
-Figure \ref{fig:probabilities} shows how the probability of a successful ascent depends on both covariates.
-According to the model the probability decreases monotonously with both `height` and `prominence`, and it is possible to compensate an increase in one covariate by decreasing the other.
-As expected the model predicts probabilities close to zero as both covariates increase and close to one as both decrease.
+The data from Chogolisa gives a much more optimistic estimate.
+The dataset contains many mountains with height and prominence comparable to Chogolisa.
+Some of these mountains even have similar numbers of fails and successes.
+It is not totally unexpected that a model with poor fit, according to the model deviance, may also predict unreliably.
 
 # Part 2: Poisson regression
 
@@ -372,7 +385,7 @@ chisq.test(ctable)
 Note that the $\chi^2$ test ends up being on 16 degrees of freedom.
 This is because we consider 4, 5 or 6 goals to be of the same category, namely 4+ goals.
 This is done to avoid having too many low frequencies in our table, since low expected counts give large contributions the the total value of the test statistic.
-The test gives a p-value of 0.5871, which means that there is no evidence against the assumption of independence.
+The test gives a p-value of 0.5871, which means we do not have sufficient evidence to reject the assumption of independence.
 
 ## b)
 
