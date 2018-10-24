@@ -73,7 +73,7 @@ model1 <- glm(cbind(success, fail) ~ height + prominence, data = mount, family =
 summary(model1)
 ```
 
-The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp\beta_0 \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. as a mountain with no height nor prominence have already been ascended, resulting in a high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
+The model parameters are, as can be seen from the output, $\beta_0 = 13.7, \beta_1=-0.00164$ and $\beta_2=-0.000174$. This means that if the height and prominence is 0, i.e. $x_1=x_2=0$, the odds of ascending the mountain successfully is $\exp(\beta_0) \approx 8.82 \cdot 10^5$. This is a very high odds, which makes sense. As a mountain with no height nor prominence has already been ascended, resulting in high odds. Now, when letting $x_1 \neq 0$ and $x_2$ fixed, the odds of successfully climbing a mountain decreases whenever we let $x_1$ increase by 1. More specifically, if we let the height of the mountain increase by 1, i.e. going from $x_1$ to $x_1+1$, the odds of climbing the 1 m lower mountain is multiplied with $\exp\beta_1 = \exp(-0.00164) = 0.9984$. In other words, it gets slightly harder to climb a taller mountain, since the odds is multiplied with a factor $<1$, so this makes sense. The same goes for $x_2$ and $\beta_2$. Letting $x_1$ be fixed and $x_2 \neq 0$, the odds of ascending a mountain decreases when the prominence increase. More specifically, when the prominence is increased by 1, i.e. going from $x_2$ to $x_2+1$, the previous odds of ascending a mountain 1 m lower is multiplied with $\exp \beta_2 = \exp(-0.000174) = 0.9998$. As can be seen, the increasing the height has more impact on the success rate of climbing the mountain than the prominence, as $\beta_1 < \beta_2$.
 
 When hypothesis testing whether a single model parameter $\beta_i = 0$ or not, the Wald test and the Z test are equivalent since the Wald statistic then becomes the Z statistic squared, which obviously is $\chi^2$.
 According to the Wald, the `prominence` parameter is less significant than the others, as the $p$ value is higher than for the the intercept and height (0.000133 versus $<2 \cdot 10^{-16}$ for the other parameters). Nevertheless, they are all still highly significant, as the $p$ values are rather small.
@@ -202,7 +202,7 @@ plower
 print("Upper limit")
 pupper
 ```
-So the $95 \%$ CI of the probability of climbing Mount Everest is $[0.0549, 0.142]$. In another words, one can say with $95 \%$ confidence that between $5.49 \%$ and $14.2 \%$ of those who attempt to climb the mountain succeed in doing so, based on this model.
+So the $95 \%$ CI of the probability of climbing Mount Everest is $[0.0549, 0.142]$. In other words, one can say with $95 \%$ confidence that between $5.49 \%$ and $14.2 \%$ of those who attempt to climb the mountain succeed in doing so, based on this model.
 From the Wikipedia page there has been 145 ascents and 121 failed attempts of climbing the mountain, so based on this it should be a probability of $\frac{145}{145+121} \approx 0.545$ to successfully climb it. This is much higher than the upper limit of the probability of ascending the mountain based on the model, so the model is rather pessimistic. Based on this, the model is not very reasonable.
 
 As for Chogolisa, with height $x_1=7665$ and prominence $x_2 = 1624$ we get that the linear predictor $\eta_\text{Chogolisa}$ is
@@ -399,7 +399,7 @@ prelim[order(-prelim$points,-prelim$goaldiff),]
 
 ## c)
 
-```{r useglm}
+```{r useglm, warning=FALSE}
 model2b <- myglm(yh ~ home + away + ya, data = tippeliga)
 summary(model2b)
 ```
