@@ -466,6 +466,7 @@ All in all, the strength based ranking indicates that our quite simple model is 
 ## d)
 
 The codechunk below simulates all 240 matches in the season 1000 times, using our model.
+The final ranking for each season is saved in the file `seasons.RData`.
 
 ```{r simulation, eval=FALSE}
 # calculate both goal rates for all possible matches
@@ -552,6 +553,7 @@ for (i in 1 :16){
 placementdf <- cbind(1:1000,data.frame(placements))
 pf <- melt(placementdf, id="1:1000")
 meandf <- ddply(pf, "variable", summarise, placement.mean=mean(value))
+meandf[order(meandf$placement.mean),]
 ```
 
 In figure \ref{fig:histogram} the final rank for each team is visualized using histograms. 
@@ -561,6 +563,35 @@ The mean result for each team is indicated by a red dotted line.
 ggplot(pf,aes(x=value))+geom_histogram(binwidth=0.5) + labs(x="Placements") + geom_vline(data=meandf, aes(xintercept=placement.mean, colour="red"), linetype="dashed", size=.5,show.legend=FALSE) +
 facet_wrap(~variable, scales = "free_y")
 ```
+
+The plots agree with the preliminary rankings, in that the top and bottom teams more or less does not change.
+Rosenborg, Molde and Brann are still the top contenders,  with mean placements approximately 2, 3 and 4, respectively.
+Rosenborg wins 541 of the 1000 simulations.
+Sandefjord, Start and Stabaek are still the bottom three teams, with mean placements appoximately 15, 14, 13, respectively.
+Sandefjord finishes last in 503 of the simulations.
+
+
+```{r winloss}
+win <- rep(0,16)
+lose <- rep(0,16)
+variance <- rep(0,16)
+for(i in 1:16){
+  win[i] <- count(placements[,i]==1)[2,2]/1000
+  lose[i] <- count(placements[,i]==16)[2,2]/1000
+  variance[i] <- var(placements[,i])
+}
+winloss <- data.frame(team=teams,win=win, lose=lose, var = variance)
+winloss
+```
+
+The proportion each team finishes first or last is shown in the table above, along with the variance of the team's placements.
+The teams at the very top do not lose any of the simulated seasons, with the exception of Brann who loses once.
+Their variance is also quite low, meaning that the model is fairly sure of their placement.
+Likewise, the bottom teams do not win any of the simulated seasons, and they also have low variance.
+Most teams end up somewhere in the middle.
+These teams are represented at all possible placements over the 1000 simulated seasons, and thus their variance is fairly high.
+It is worth noting that only Rosenborg, Molde and Sandefjord have strengths significantly different from that of BodoeGlimt at level $0.1$.
+Therefore one should not read too much into the results for the remaining teams.
 
 # Source code
 ## myglm.R
