@@ -21,32 +21,38 @@ myglm <- function(formula, data = list(), contrasts = NULL, family = "poisson",
     response <- exp
     # the Poisson log-likelihood
     logLikelihood <- function(beta) {
-      sum <- 0
+      sum0 <- 0
       for (i in range(1, n)) {
         eta_i <- t(x[i,]) %*% beta
         lambda_i <- response(eta_i)
-        sum <- sum + y[i]*log(lambda_i) - log(factorial(y[i])) - lambda_i
+        sum0 <- sum0 + y[i]*log(lambda_i) - log(factorial(y[i])) - lambda_i
       }
-      return(sum)
+      return(-sum0)
     }
     responsePrime <- exp
     
     scoreFunction <- function(beta) {
-      sum <- rep(0, p)
+      sum0 <- rep(0, p)
       for (i in range(1, n)) {
         eta_i <- t(x[i,]) %*% beta
-        sum <- sum + (y[i]/responsePrime(eta_i) + responsePrime(eta_i)) * x[i,]
+        sum0 <- sum0 + (y[i] - responsePrime(eta_i)) * x[i,]
       }
-      return(sum)
+      return(-sum0)
     }
   } else {
     stop(sprintf("Unknown family %s", family))
   }
+  scoreSquaredSum <- function (beta) {sum(scoreFunction(beta)^2)}
+  logl = function(betas){
+    l = -(y%*%X%*%betas-sum(exp(X%*%betas)))
+    return(l)
+  }
   
-  beta_init <- rep(0, p)
-  est$result <- optim(beta_init, fn = logLikelihood, gr = scoreFunction, method = 'BFGS', hessian = TRUE)
+  beta_init <- matrix(0, nrow = p, ncol = 1)
+  est$result <- optim(beta_init, fn = logl, method = 'BFGS')
   est$betaHat <- betaHat <- est$result$par
-  est$covar <- covar <- est$result$hessian
+  rownames(betaHat) <- colnames(X)
+  est$covar <- covar <- matrix(0, ncol = p, nrow = p)
   
   est$yhat <- yhat <- x %*% betaHat
   est$residuals <- residuals <- y - yhat
@@ -166,7 +172,7 @@ anova.myglm <- function(object, ...){
 # optim requires thtat the first argument of the function optim shall optimize is the parameters over which minimization is to take place (par)
 # it is common to include all other necessary arguments in a list called "args", but this can be done other ways as well
 loglik_poi <- function(par, args = list(n = )){
-  l = -(-sum(exp(x%*%betas) + y%*%x%*%betas))
+  
   
 }
 

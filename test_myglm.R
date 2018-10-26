@@ -24,7 +24,7 @@ for (i in 1:length(tippeliga[,1])) {
   goals[2*i] <- tippeliga$ya[i]
 }
 X <- X[,c(1:2,4:18)] # remove linear dependency
-model2b <- myglm(goals ~ -1 + X, data = tippeliga)
+model2b <- myglm(goals ~ -1 + X, family = "poisson")
 summary(model2b)
 
 model2glm <- glm(goals ~ -1 + X, family = "poisson")
