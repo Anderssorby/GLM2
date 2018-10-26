@@ -12,7 +12,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 #install.packages("ggplot2")
 #install.packages("GGally")
+#install.packages("rlist")
 library(ggplot2)
+library(rlist)
 ```
 
 # Part 1: Logistic regression
@@ -461,7 +463,7 @@ All in all, the strength based ranking indicates that our quite simple model is 
 
 ## d)
 
-```{r simulation, EVAL=false}
+```{r simulation, eval=FALSE}
 # calculate both goal rates for all possible matches
 goalrates <- data.frame(hometeam=rep(0,240),awayteam=rep(0,240),rh=rep(0,240),ra<-rep(0,240))
 intercept <- model2glm$coefficients[1]
@@ -484,42 +486,60 @@ for (i in 1:16){
 #simulate seasons
 seasons <- list()
 simulations <- 1000
+season <- data.frame(team = teams, points = rep(0,16), goaldiff = rep(0,16))
+pointtables <- rep(list(season),simulations)
 
 for (i in 1:240) {
-  print("Simulating Match", i, " for ", simulations, " seasons.")
+  print(c("Simulating Match", i, " for ", simulations, " seasons."))
   yh <- rpois(simulations, goalrates[i,3])
   ya <- rpois(simulations,goalrates[i,4])
   gdif <- yh - ya
   winners <- sign(gdif)
   for(j in 1:simulations) {
-    pointtable <- data.frame(team = teams, points = rep(0,16), goaldiff = rep(0,16))
-    homeTeamBool <- pointtable$team == teams[goalrates[i,1]]
-    awayTeamBool <- pointtable$team == teams[goalrates[i,2]]
-    pointsH <- pointtable[homeTeamBool,]$points
-    pointsA <- pointtable[awayTeamBool,]$points
-    gdifH <- pointtable[homeTeamBool,]$goaldiff
-    gdifA <-pointtable[homeTeamBool,]$goaldiff 
-    pointtable[homeTeamBool,]$goaldiff <- gdifH + gdif[j]
-    pointtable[awayTeamBool,]$goaldiff <- gdifA - gdif[j]
+    homeTeamBool <- pointtables[[j]]$team == teams[goalrates[i,1]]
+    awayTeamBool <- pointtables[[j]]$team == teams[goalrates[i,2]]
+    pointsH <- pointtables[[j]][homeTeamBool,]$points
+    pointsA <- pointtables[[j]][awayTeamBool,]$points
+    gdifH <- pointtables[[j]][homeTeamBool,]$goaldiff
+    gdifA <-pointtables[[j]][awayTeamBool,]$goaldiff 
+    pointtables[[j]][homeTeamBool,]$goaldiff <- gdifH + gdif[j]
+    pointtables[[j]][awayTeamBool,]$goaldiff <- gdifA - gdif[j]
     if (winners[j] == -1) {
       # Away wins
-      pointtable[awayTeamBool,]$points <- pointsA + 3
+      pointtables[[j]][awayTeamBool,]$points <- pointsA + 3
     } else if (winners[j] == 0) {
       # Tie
-      pointtable[homeTeamBool,]$points <- pointsH + 1
-      pointtable[awayTeamBool,]$points <- pointsA + 1
+      pointtables[[j]][homeTeamBool,]$points <- pointsH + 1
+      pointtables[[j]][awayTeamBool,]$points <- pointsA + 1
     } else {
       # Home wins
-      pointtable[homeTeamBool,]$points <- pointsH + 3
+      pointtables[[j]][homeTeamBool,]$points <- pointsH + 3
     }
-    seasons<-c(seasons, pointtable)
   }
-  
 }
-saveRDS(seasons,file="seasons.dat")
+list.save(pointtables,file="seasons.RData")
+```
+
+```{r results}
+pointtables <- list.load("seasons.RData")
+simulations <- length(pointtables)
+seasonvector <- vector()
+for (i in 1:simulations){
+  seasonvector <- c(seasonvector,rep(i,16))
+}
+results <- data.frame(team = rep(teams,simulations), season = seasonvector, rank = rep(0,16*simulations))
+for (i in 1:simulations){
+  results[results$season==i,]$rank <-  order(-pointtables[[i]]$points,-pointtables[[i]]$goaldiff)
+}
+
+ggplot(data=results, aes(results$rank)) + geom_histogram(colour="black",fill="white") + facet_wrap(~ team)
+
+test <- results[results$team==teams[9],]
+hist(test$rank)
 ```
 
 # Source code
 ## myglm.R
 ```{r source, code=readLines('myglm.R')}
+
 ```
