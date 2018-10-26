@@ -414,8 +414,7 @@ prelim[order(-prelim$points,-prelim$goaldiff),]
 ## c)
 
 ```{r useglm, warning=FALSE}
-model2b <- myglm(yh ~ home + away + ya, data = tippeliga)
-summary(model2b)
+
 ```
 
 ```{r designmatrix, warning=FALSE}
@@ -441,7 +440,8 @@ for (i in 1:length(tippeliga[,1])) {
   goals[2*i] <- tippeliga$ya[i]
 }
 X <- X[,c(1:2,4:18)] # remove linear dependency
-
+model2b <- myglm(goals ~ -1 + X, data = tippeliga)
+summary(model2b)
 model2glm <- glm(goals ~ -1 + X, family = "poisson")
 summary(model2glm)
 ```
@@ -461,7 +461,7 @@ All in all, the strength based ranking indicates that our quite simple model is 
 
 ## d)
 
-```{r simulation, EVAL=false}
+```{r simulation, EVAL=FALSE}
 # calculate both goal rates for all possible matches
 goalrates <- data.frame(hometeam=rep(0,240),awayteam=rep(0,240),rh=rep(0,240),ra<-rep(0,240))
 intercept <- model2glm$coefficients[1]
@@ -486,7 +486,7 @@ seasons <- list()
 simulations <- 1000
 
 for (i in 1:240) {
-  print("Simulating Match", i, " for ", simulations, " seasons.")
+  cat("Simulating Match", i, "for", simulations, "seasons.\n")
   yh <- rpois(simulations, goalrates[i,3])
   ya <- rpois(simulations,goalrates[i,4])
   gdif <- yh - ya
@@ -517,6 +517,10 @@ for (i in 1:240) {
   
 }
 saveRDS(seasons,file="seasons.dat")
+```
+```{r simulations-result}
+seasons <- loadRDS(file="seasons.dat")
+head(seasons)
 ```
 
 # Source code
