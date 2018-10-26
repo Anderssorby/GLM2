@@ -552,9 +552,20 @@ for (i in 1 :16){
 }
 placementdf <- cbind(1:1000,data.frame(placements))
 pf <- melt(placementdf, id="1:1000")
+point.mean <- rep(0,16)
+for (i in 1:16){
+  for (j in 1:1000){
+    point.mean[i] <- point.mean[i]+pointtables[[j]][i,2]
+  }
+  point.mean[i] <- point.mean[i]/simulations
+}
 meandf <- ddply(pf, "variable", summarise, placement.mean=mean(value))
+meandf <- cbind(meandf,data.frame(point.mean = point.mean))
 meandf[order(meandf$placement.mean),]
 ```
+The table above ranks the teams by their mean placement in our simulations.
+This ranking is in perfect agreement with our strength ranking, which is to be expected when simulating the entire season.
+It would likely not be the case when only the remaining season is simulated.
 
 In figure \ref{fig:histogram} the final rank for each team is visualized using histograms. 
 The mean result for each team is indicated by a red dotted line.
@@ -587,7 +598,7 @@ winloss
 The proportion each team finishes first or last is shown in the table above, along with the variance of the team's placements.
 The teams at the very top do not lose any of the simulated seasons, with the exception of Brann who loses once.
 Their variance is also quite low, meaning that the model is fairly sure of their placement.
-Likewise, the bottom teams do not win any of the simulated seasons, and they also have low variance.
+Likewise, the bottom teams do not win any of the simulated seasons, and like the top teams they also have low variance.
 Most teams end up somewhere in the middle.
 These teams are represented at all possible placements over the 1000 simulated seasons, and thus their variance is fairly high.
 It is worth noting that only Rosenborg, Molde and Sandefjord have strengths significantly different from that of BodoeGlimt at level $0.1$.
