@@ -15,6 +15,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("rlist")
 library(ggplot2)
 library(rlist)
+library(reshape2)
+library(plyr)
 ```
 
 # Part 1: Logistic regression
@@ -463,11 +465,13 @@ All in all, the strength based ranking indicates that our quite simple model is 
 
 ## d)
 
+The codechunk below simulates all 240 matches in the season 1000 times, using our model.
+
 ```{r simulation, eval=FALSE}
 # calculate both goal rates for all possible matches
 goalrates <- data.frame(hometeam=rep(0,240),awayteam=rep(0,240),rh=rep(0,240),ra<-rep(0,240))
-intercept <- model2glm$coefficients[1]
-homeadv <- model2glm$coefficients[2]
+intercept <- model2b$coefficients[1]
+homeadv <- model2b$coefficients[2]
 for (i in 1:16){
   for (j in 1:15){
     if (j>=i){
@@ -524,18 +528,38 @@ list.save(pointtables,file="seasons.RData")
 pointtables <- list.load("seasons.RData")
 simulations <- length(pointtables)
 seasonvector <- vector()
+
 for (i in 1:simulations){
   seasonvector <- c(seasonvector,rep(i,16))
 }
 results <- data.frame(team = rep(teams,simulations), season = seasonvector, rank = rep(0,16*simulations))
+rank <- vector()
 for (i in 1:simulations){
-  results[results$season==i,]$rank <-  order(-pointtables[[i]]$points,-pointtables[[i]]$goaldiff)
+  order <- order(-pointtables[[i]]$points,-pointtables[[i]]$goaldiff)
+  seasonrank <- vector()
+  for (j in 1:16){
+    seasonrank <- c(seasonrank,match(j,order))
+  }
+  rank <- c(rank,seasonrank)
 }
+results$rank <- rank
 
-ggplot(data=results, aes(results$rank)) + geom_histogram(colour="black",fill="white") + facet_wrap(~ team)
+placements <- matrix(0,nrow=simulations,ncol=16)
+colnames(placements) <- teams
+for (i in 1 :16){
+  placements[,i] <- results[results$team==teams[i],]$rank
+}
+placementdf <- cbind(1:1000,data.frame(placements))
+pf <- melt(placementdf, id="1:1000")
+meandf <- ddply(pf, "variable", summarise, placement.mean=mean(value))
+```
 
-test <- results[results$team==teams[9],]
-hist(test$rank)
+In figure \ref{fig:histogram} the final rank for each team is visualized using histograms. 
+The mean result for each team is indicated by a red dotted line.
+
+```{r histogram, fig.cap="\\label{fig:histogram} A visualization of each teams placements over 1000 simulated seasons."}
+ggplot(pf,aes(x=value))+geom_histogram(binwidth=0.5) + labs(x="Placements") + geom_vline(data=meandf, aes(xintercept=placement.mean, colour="red"), linetype="dashed", size=.5,show.legend=FALSE) +
+facet_wrap(~variable, scales = "free_y")
 ```
 
 # Source code

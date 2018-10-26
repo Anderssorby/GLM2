@@ -166,7 +166,7 @@ anova.myglm <- function(object, ...){
 # optim requires thtat the first argument of the function optim shall optimize is the parameters over which minimization is to take place (par)
 # it is common to include all other necessary arguments in a list called "args", but this can be done other ways as well
 loglik_poi <- function(par, args = list(n = )){
-  
+  l = -(-sum(exp(x%*%betas) + y%*%x%*%betas))
   
 }
 
