@@ -416,8 +416,7 @@ prelim[order(-prelim$points,-prelim$goaldiff),]
 ## c)
 
 ```{r useglm, warning=FALSE}
-model2b <- myglm(yh ~ home + away + ya, data = tippeliga)
-summary(model2b)
+
 ```
 
 ```{r designmatrix, warning=FALSE}
@@ -443,7 +442,8 @@ for (i in 1:length(tippeliga[,1])) {
   goals[2*i] <- tippeliga$ya[i]
 }
 X <- X[,c(1:2,4:18)] # remove linear dependency
-
+model2b <- myglm(goals ~ -1 + X, data = tippeliga)
+summary(model2b)
 model2glm <- glm(goals ~ -1 + X, family = "poisson")
 summary(model2glm)
 ```
@@ -490,7 +490,7 @@ season <- data.frame(team = teams, points = rep(0,16), goaldiff = rep(0,16))
 pointtables <- rep(list(season),simulations)
 
 for (i in 1:240) {
-  print(c("Simulating Match", i, " for ", simulations, " seasons."))
+  cat("Simulating Match", i, "for", simulations, "seasons.\n")
   yh <- rpois(simulations, goalrates[i,3])
   ya <- rpois(simulations,goalrates[i,4])
   gdif <- yh - ya

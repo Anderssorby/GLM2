@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 library(rlist)
 
 filepath <- "https://www.math.ntnu.no/emner/TMA4315/2018h/eliteserien2018"
@@ -32,6 +33,9 @@ model2glm <- glm(goals ~ -1 + X, family = "poisson")
 
 str=c(0,unname(model2glm$coefficients[3:17]))
 
+=======
+source('test_myglm.R')
+>>>>>>> 16194cd0d3ed207f80585a06417d5082dbbd9d8d
 # calculate both goal rates for all possible matches
 goalrates <- data.frame(hometeam=rep(0,240),awayteam=rep(0,240),rh=rep(0,240),ra<-rep(0,240))
 intercept <- model2glm$coefficients[1]
@@ -54,16 +58,23 @@ for (i in 1:16){
 #simulate seasons
 seasons <- list()
 simulations <- 1000
+<<<<<<< HEAD
 season <- data.frame(team = teams, points = rep(0,16), goaldiff = rep(0,16))
 pointtables <- rep(list(season),simulations)
 
 for (i in 1:240) {
   print(c("Simulating Match", i, " for ", simulations, " seasons."))
+=======
+
+for (i in 1:240) {
+  cat("Simulating Match", i, "for", simulations, "seasons.\n")
+>>>>>>> 16194cd0d3ed207f80585a06417d5082dbbd9d8d
   yh <- rpois(simulations, goalrates[i,3])
   ya <- rpois(simulations,goalrates[i,4])
   gdif <- yh - ya
   winners <- sign(gdif)
   for(j in 1:simulations) {
+<<<<<<< HEAD
     homeTeamBool <- pointtables[[j]]$team == teams[goalrates[i,1]]
     awayTeamBool <- pointtables[[j]]$team == teams[goalrates[i,2]]
     pointsH <- pointtables[[j]][homeTeamBool,]$points
@@ -86,3 +97,30 @@ for (i in 1:240) {
   }
 }
 list.save(pointtables,file="seasons.RData")
+=======
+    pointtable <- data.frame(team = teams, points = rep(0,16), goaldiff = rep(0,16))
+    homeTeamBool <- pointtable$team == teams[goalrates[i,1]]
+    awayTeamBool <- pointtable$team == teams[goalrates[i,2]]
+    pointsH <- pointtable[homeTeamBool,]$points
+    pointsA <- pointtable[awayTeamBool,]$points
+    gdifH <- pointtable[homeTeamBool,]$goaldiff
+    gdifA <-pointtable[homeTeamBool,]$goaldiff 
+    pointtable[homeTeamBool,]$goaldiff <- gdifH + gdif[j]
+    pointtable[awayTeamBool,]$goaldiff <- gdifA - gdif[j]
+    if (winners[j] == -1) {
+      # Away wins
+      pointtable[awayTeamBool,]$points <- pointsA + 3
+    } else if (winners[j] == 0) {
+      # Tie
+      pointtable[homeTeamBool,]$points <- pointsH + 1
+      pointtable[awayTeamBool,]$points <- pointsA + 1
+    } else {
+      # Home wins
+      pointtable[homeTeamBool,]$points <- pointsH + 3
+    }
+    seasons<-c(seasons, pointtable)
+  }
+  
+}
+saveRDS(seasons,file="seasons.dat")
+>>>>>>> 16194cd0d3ed207f80585a06417d5082dbbd9d8d
