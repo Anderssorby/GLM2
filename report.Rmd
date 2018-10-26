@@ -445,12 +445,12 @@ for (i in 1:length(tippeliga[,1])) {
 }
 X <- X[,c(1:2,4:18)] # remove linear dependency
 model2b <- myglm(goals ~ -1 + X, data = tippeliga)
-summary(model2b)
+model2b$coefficients
 model2glm <- glm(goals ~ -1 + X, family = "poisson")
 summary(model2glm)
 ```
 ```{r ranking}
-str=c(0,unname(model2glm$coefficients[3:17]))
+str=c(0,unname(model2b$coefficients[3:17]))
 ranking <- data.frame(team = teams, strength=str,multiplier=exp(str))
 ranking[order(-ranking$strength),]
 ```
@@ -566,6 +566,8 @@ meandf[order(meandf$placement.mean),]
 The table above ranks the teams by their mean placement in our simulations.
 This ranking is in perfect agreement with our strength ranking, which is to be expected when simulating the entire season.
 It would likely not be the case when only the remaining season is simulated.
+It is worth noting that Ranheim has a higher point mean than Kristiansund, despite placing slightly worse on average.
+The difference is small, and is more than likely due to chance.
 
 In figure \ref{fig:histogram} the final rank for each team is visualized using histograms. 
 The mean result for each team is indicated by a red dotted line.
